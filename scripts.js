@@ -1,17 +1,14 @@
 $(document).ready(() => {
-    const particle = new Particle()
-    const token = "1346bf711995c0318546317c12d30f54506339fb"
-
     const animals = [
-        ['sanglier', 'cochon', 'porc'], // 0 -> Sanglier
-        ['bambie', 'biche']             // 1 -> Biche
+        ['wild boar', 'hog', 'oinker', "peccary", 'porker', 'pig'], // 0 -> Sanglier
+        ['wapiti', 'elk', 'cervid']             // 1 -> Biche
     ]
 
     const states = [
         [], // 0 -> Disabled
-        ['loupé', 'raté', 'passé', 'manqué'],    // 1 -> Raté
-        ['blessé', 'toucher', 'touché'],           // 2 -> Touché
-        ['tué', 'mort', 'descendu', 'abauttu', 'défoncé'] // 3 -> Tué
+        ['missed'],    // 1 -> Raté
+        ['hit'],           // 2 -> Touché
+        ['killed', 'shot', 'dead', 'wiped out', 'drown'] // 3 -> Tué
     ]
 
     const resetStateDelay = 30 * 1000
@@ -36,9 +33,7 @@ $(document).ready(() => {
 
     var recognition = new webkitSpeechRecognition()
     recognition.interimResults = true
-    recognition.lang = "fr-FR"
-
-    publishEvent("comhunt_reset", null)
+    recognition.lang = "en"
 
     recognition.onresult = function (event) {
         var interim_transcript = ''
@@ -69,44 +64,12 @@ $(document).ready(() => {
             }, 2000)
 
             if (analysis.animal >= 0 && analysis.state) {
-                publishEvent("comhunt_animal", analysis.state + "-" + getIndividual(analysis.animal, analysis.state) + "-" + analysis.animal)
                 $record.addClass('success')
             } else
                 $record.addClass('error')
 
             final_transcript = ''
         }
-    }
-
-    function getIndividual(animal, state) {
-        const animalState = animalsStates[animal]
-
-        for (let i = 0; i < animalState.length; i++) {
-            if (animalState[i] < state) {
-                setState(animal, state, i)
-                return i
-            }
-        }
-
-        for (let i = 0; i < animalState.length; i++) {
-            if (animalState[i] == 0) {
-                setState(animal, state, i)
-                return i
-            }
-        }
-
-        setState(animal, state, 0)
-        return 0
-    }
-
-    function setState(animal, state, i) {
-        animalsStates[animal][i] = state
-
-        clearInterval(resetIntervals[animal][i])
-        resetIntervals[animal][i] = setTimeout(() => {
-            animalsStates[animal][i] = 0
-            publishEvent("comhunt_animal", 0 + "-" + i + "-" + animal)
-        }, resetStateDelay)
     }
 
     recognition.onerror = function (event) {
@@ -163,7 +126,7 @@ $(document).ready(() => {
         animals.forEach((_animal, index) => {
             _animal.forEach((animalName) => {
                 if (transcript.includes(animalName)) {
-                    var regexp = new RegExp(animalName, "gi");
+                    var regexp = new RegExp(animalName.toLowerCase(), "gi");
                     transcriptFormated = transcriptFormated.replace(regexp, "<span class='animal'>" + animalName + "</span>");
                     animal = index
                 }
@@ -173,7 +136,7 @@ $(document).ready(() => {
         states.forEach((_state, index) => {
             _state.forEach((stateName) => {
                 if (transcript.includes(stateName)) {
-                    var regexp = new RegExp(stateName, "gi");
+                    var regexp = new RegExp(stateName.toLowerCase(), "gi");
                     transcriptFormated = transcriptFormated.replace(regexp, "<span class='status'>" + stateName + "</span>");
                     state = index
                 }
@@ -185,24 +148,5 @@ $(document).ready(() => {
         analyse.state = state
 
         return analyse
-    }
-
-    function pad(n, width, z) {
-        z = z || '0'
-        n = n + ''
-        return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n
-    }
-
-    function publishEvent(eventName, data) {
-        var publishEventPr = particle.publishEvent({ name: eventName, data: data, auth: token });
-
-        publishEventPr.then(
-            function (data) {
-                if (!data.body.ok) { console.error("Cant send event") }
-            },
-            function (err) {
-                console.error("Failed to publish event: " + err)
-            }
-        );
     }
 })

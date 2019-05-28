@@ -186,7 +186,7 @@ li {
 }
 
 #record.success:after {
-    content: 'Parfait !';
+    content: 'Nice !';
 }
 
 #record.error {
@@ -194,7 +194,7 @@ li {
 }
 
 #record.error:after {
-    content: 'Réessayez…';
+    content: 'Try again...';
 }
 
 .animal, .status {
